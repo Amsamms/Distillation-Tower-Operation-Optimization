@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Distillation Operator's Handbook</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
+    <!-- Chosen Palette: Calm Harmony (Stone, Slate, Teal) -->
+    <!-- Application Structure Plan: A task-oriented dashboard SPA. Instead of linear sections, content is organized into functional modules: 'Fundamentals', 'Operations & Control', 'Troubleshooting', and 'Optimization & Future'. This structure is chosen to mirror an operator's workflow, allowing quick navigation to solve specific problems (e.g., "how to start up a column" or "why is pressure high?") rather than requiring a full read-through. Key interactions include a column type selector to load specific operating data, an interactive troubleshooting tool based on symptoms, and dynamic charts for comparing optimization strategies. This prioritizes usability and rapid information retrieval in a high-stakes operational environment. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Core Principles (VLE, Balances) -> Goal: Inform -> Viz/Presentation: Interactive HTML/CSS diagrams with hover/click details -> Justification: Breaks down complex theory into digestible, interactive visuals without external images. Library: Vanilla JS + Tailwind.
+        - Report Info: Control Strategies (Table 2.1) -> Goal: Organize/Compare -> Viz/Presentation: Interactive HTML table -> Justification: Allows users to easily view and compare complex control configurations. Library: Vanilla JS + Tailwind.
+        - Report Info: Operating Procedures (Startup/Shutdown) -> Goal: Organize/Inform -> Viz/Presentation: Accordion/checklist format -> Justification: Presents sequential procedures clearly and concisely. Library: Vanilla JS + Tailwind.
+        - Report Info: Troubleshooting Matrix (Table 5.1) -> Goal: Solve/Diagnose -> Viz/Presentation: Interactive symptom selector that dynamically displays causes/solutions -> Justification: Transforms a static table into a powerful, practical diagnostic tool, which is the app's core value. Library: Vanilla JS.
+        - Report Info: Energy Savings (Table 6.1) -> Goal: Compare/Analyze -> Viz/Presentation: Dynamic Bar Chart -> Justification: Visually compelling comparison of quantitative data, more effective than a table for showing relative performance. Library: Chart.js.
+        - Report Info: Future Trends (APC, Digital Twin) -> Goal: Inform -> Viz/Presentation: Infographic-style layouts using Tailwind grid -> Justification: Modern visual presentation for forward-looking concepts. Library: Tailwind.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        .nav-link {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .nav-link.active {
+            color: #0d9488; /* teal-600 */
+            border-bottom-color: #0d9488; /* teal-600 */
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 450px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 450px;
+            }
+        }
+        .tab-button.active {
+            background-color: #0d9488; /* teal-600 */
+            color: white;
+            border-color: #0d9488; /* teal-600 */
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+        .control-line {
+            position: absolute;
+            background-color: transparent;
+            z-index: 10;
+        }
+        .control-arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-style: solid;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-slate-800">
+
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-50">
+            <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center">
+                        <span class="font-bold text-xl text-teal-700">Operator's Handbook</span>
+                    </div>
+                    <div class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent" data-target="home">Overview</a>
+                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent" data-target="fundamentals">Fundamentals</a>
+                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent" data-target="operations">Operations & Control</a>
+                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent" data-target="troubleshooting">Troubleshooting</a>
+                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent" data-target="optimization">Optimization</a>
+                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent" data-target="future">Future Trends</a>
+                        </div>
+                    </div>
+                     <div class="md:hidden">
+                        <select id="mobile-nav" class="bg-white border border-slate-300 rounded-md p-2 text-sm">
+                            <option value="home">Overview</option>
+                            <option value="fundamentals">Fundamentals</option>
+                            <option value="operations">Operations & Control</option>
+                            <option value="troubleshooting">Troubleshooting</option>
+                            <option value="optimization">Optimization</option>
+                            <option value="future">Future Trends</option>
+                        </select>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto p-4 sm:p-6 lg:p-8 flex-grow">
+            <!-- Home/Overview Section -->
+            <section id="home" class="content-section active">
+                <div class="text-center bg-white p-8 rounded-xl shadow-lg border border-slate-200">
+                    <h1 class="text-4xl font-bold text-slate-900 mb-4">A Practical Guide to Modern Distillation</h1>
+                    <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+                        This interactive guide translates the comprehensive "Operator's Handbook" into a practical, task-oriented tool. Navigate through fundamental principles, operational procedures, advanced troubleshooting, and the future of distillation technology. Our goal is to empower operators and engineers with quick, accessible, and actionable insights for safe and efficient plant operation.
+                    </p>
+                </div>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+                    <div class="bg-white p-6 rounded-lg shadow-md border border-slate-100 hover:shadow-xl transition-shadow">
+                        <h3 class="font-bold text-xl text-teal-700 mb-2">Operations & Control</h3>
+                        <p class="text-slate-600">Master startup, shutdown, and control strategies for various column types, from CDUs to De-ethanizers.</p>
+                        <button class="nav-link-button mt-4 text-teal-600 font-semibold" data-target="operations">Go to Operations →</button>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md border border-slate-100 hover:shadow-xl transition-shadow">
+                        <h3 class="font-bold text-xl text-teal-700 mb-2">Interactive Troubleshooting</h3>
+                        <p class="text-slate-600">Diagnose issues from high pressure to off-spec products using our symptom-based interactive tool.</p>
+                        <button class="nav-link-button mt-4 text-teal-600 font-semibold" data-target="troubleshooting">Start Diagnosing →</button>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md border border-slate-100 hover:shadow-xl transition-shadow">
+                        <h3 class="font-bold text-xl text-teal-700 mb-2">Energy Optimization</h3>
+                        <p class="text-slate-600">Explore and compare advanced, heat-integrated designs like VRC and DWCs to reduce energy consumption.</p>
+                        <button class="nav-link-button mt-4 text-teal-600 font-semibold" data-target="optimization">Find Savings →</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Fundamentals Section -->
+            <section id="fundamentals" class="content-section">
+                <h2 class="text-3xl font-bold mb-6 text-slate-800 border-b-2 pb-2 border-teal-200">Foundational Principles</h2>
+                <p class="text-slate-600 mb-8 max-w-4xl">This section covers the core scientific principles governing all distillation processes. Understanding Vapor-Liquid Equilibrium (VLE), material/energy balances, and the function of internal components is essential for effective control and troubleshooting. These are not abstract theories, but the tangible physics an operator manipulates every day.</p>
+                <div class="grid md:grid-cols-1 lg:grid-cols-2 gap-8">
+                     <div class="bg-white p-6 rounded-lg shadow-md border border-slate-100 lg:col-span-2">
+                        <h3 class="font-bold text-xl text-teal-700 mb-3">Interactive Vapor-Liquid Equilibrium (VLE)</h3>
+                        <p class="text-slate-600 mb-4">VLE is the basis of separation. This T-xy diagram shows the boiling point (Bubble Line) and dew point (Dew Line) of a mixture at constant pressure. At any temperature in the two-phase region, the vapor is richer in the more volatile component than the liquid. <strong class="text-teal-600">Move your mouse over the chart</strong> to see how the compositions change. The horizontal "tie-line" connects the liquid (x) and vapor (y) compositions that are in equilibrium at that temperature.</p>
+                         <div class="chart-container">
+                           <canvas id="vleChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md border border-slate-100">
+                        <h3 class="font-bold text-xl text-teal-700 mb-3">Material & Energy Balances</h3>
+                        <p class="text-slate-600 mb-4">What goes in must come out. Operators control the column by manipulating these balances. Reflux ($L$) and Boil-up ($V$) control product purity (energy balance), while Distillate ($D$) and Bottoms ($B$) flows control levels (material balance). Vapor changes move fast; liquid changes move slowly, creating control challenges.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md border border-slate-100">
+                        <h3 class="font-bold text-xl text-teal-700 mb-3">Column Internals: Trays vs. Packing</h3>
+                        <p class="text-slate-600 mb-2"><strong>Trays:</strong> Robust, handle high liquid rates, good for fouling service. Prone to hydraulic issues like flooding (high vapor) or weeping (low vapor).</p>
+                        <p class="text-slate-600"><strong>Packing:</strong> Higher efficiency, lower pressure drop (ideal for vacuum). Prone to maldistribution (channeling), which kills efficiency.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Operations & Control Section -->
+            <section id="operations" class="content-section">
+                <h2 class="text-3xl font-bold mb-6 text-slate-800 border-b-2 pb-2 border-teal-200">Operations & Control</h2>
+                <p class="text-slate-600 mb-8 max-w-4xl">This module is a practical guide to the day-to-day management of distillation columns. It covers the essential control loops that ensure stability, step-by-step procedures for routine and non-routine operations, and tailored advice for specific types of columns found throughout a plant.</p>
+                <div class="flex flex-wrap border-b border-gray-200 mb-6">
+                    <button class="tab-button py-2 px-4 text-slate-600 font-semibold border-b-2 border-transparent" data-tab="op-procedures">Operating Procedures</button>
+                    <button class="tab-button py-2 px-4 text-slate-600 font-semibold border-b-2 border-transparent" data-tab="op-column-types">Specific Column Types</button>
+                    <button class="tab-button py-2 px-4 text-slate-600 font-semibold border-b-2 border-transparent" data-tab="op-control">Control Strategies</button>
+                </div>
+                <div id="op-procedures" class="op-tab-content">
+                    <div class="space-y-4">
+                        <div class="accordion-item bg-white rounded-lg shadow-sm border border-slate-200">
+                            <button class="accordion-header w-full text-left p-4 font-semibold text-lg text-slate-700 flex justify-between items-center">
+                                Column Startup Procedure
+                                <span class="transform transition-transform duration-300">▼</span>
+                            </button>
+                            <div class="accordion-content px-4 pb-4 text-slate-600">
+                                <ol class="list-decimal list-inside space-y-2 mt-2">
+                                    <li><strong>Pre-Startup Checks:</strong> Verify valve line-up, utility availability, and maintenance completion.</li>
+                                    <li><strong>Inert Gas Purge:</strong> Purge with Nitrogen to remove O₂. Critical for safety.</li>
+                                    <li><strong>Establish Levels:</strong> Fill sump and reflux drum to safe levels. Start cooling water to condenser.</li>
+                                    <li><strong>Initiate Boil-up:</strong> Slowly introduce heat to reboiler. Operate at **Total Reflux** (all condensate returned to column) until temperature profile is stable.</li>
+                                    <li><strong>Introduce Feed:</strong> Slowly start feed flow and begin drawing products to control levels.</li>
+                                    <li><strong>Switch to Auto:</strong> Transfer control loops to automatic mode and fine-tune setpoints for on-spec production.</li>
+                                </ol>
+                            </div>
+                        </div>
+                        <div class="accordion-item bg-white rounded-lg shadow-sm border border-slate-200">
+                            <button class="accordion-header w-full text-left p-4 font-semibold text-lg text-slate-700 flex justify-between items-center">
+                                Column Shutdown Procedure
+                                <span class="transform transition-transform duration-300">▼</span>
+                            </button>
+                            <div class="accordion-content px-4 pb-4 text-slate-600">
+                                <ol class="list-decimal list-inside space-y-2 mt-2">
+                                    <li><strong>Stop Feed:</strong> Cease feed and transition back to total reflux operation.</li>
+                                    <li><strong>Reduce Heat Slowly:</strong> Gradually reduce reboiler duty. A sudden stop can cause a vacuum.</li>
+                                    <li><strong>Stop Cooling & Reflux:</strong> Once heat is off and pressure is low, stop condenser and reflux pump.</li>
+                                    <li><strong>Drain and Purge:</strong> Drain all liquid from the system, then purge with Nitrogen to remove hydrocarbons.</li>
+                                    <li><strong>Confirm Safe for Entry:</strong> Test for safe oxygen levels before any maintenance.</li>
+                                </ol>
+                            </div>
+                        </div>
+                         <div class="accordion-item bg-white rounded-lg shadow-sm border border-slate-200">
+                            <button class="accordion-header w-full text-left p-4 font-semibold text-lg text-slate-700 flex justify-between items-center">
+                                Emergency Shutdown (ESD)
+                                <span class="transform transition-transform duration-300">▼</span>
+                            </button>
+                            <div class="accordion-content px-4 pb-4 text-slate-600">
+                                <p>An ESD system acts automatically or manually to bring the unit to a safe state. Typical actions include:</p>
+                                <ul class="list-disc list-inside space-y-2 mt-2">
+                                    <li>Shutting off feed flow.</li>
+                                    <li>Cutting heat source to the reboiler.</li>
+                                    <li>Opening a vent to safely depressurize the column to the flare system.</li>
+                                    <li>Pressure Relief Valves (PRVs) are the final line of defense against overpressure.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="op-column-types" class="op-tab-content hidden">
+                    <div class="flex items-center space-x-4 mb-6">
+                        <label for="column-type-selector" class="font-semibold">Select Column Type:</label>
+                        <select id="column-type-selector" class="p-2 border border-slate-300 rounded-md bg-white">
+                            <option value="cdu">CDU Main Fractionator</option>
+                            <option value="deethanizer">De-ethanizer</option>
+                            <option value="debutanizer">Debutanizer</option>
+                            <option value="stripper">Stripper</option>
+                        </select>
+                    </div>
+                    <div id="column-type-display" class="bg-white p-6 rounded-lg shadow-md border border-slate-200 min-h-[300px]">
+                        
+                    </div>
+                </div>
+                <div id="op-control" class="op-tab-content hidden">
+                    <h3 class="font-bold text-xl text-teal-700 mb-3">Interactive Control Strategy Visualizer</h3>
+                    <p class="text-slate-600 mb-4">Select a control strategy to see which variables are manipulated to control composition (<span class="text-blue-600 font-semibold">blue lines</span>) and which control levels (<span class="text-green-600 font-semibold">green lines</span>). The choice depends on factors like reflux ratio (L/D).</p>
+                    <div class="grid md:grid-cols-3 gap-8 items-start">
+                        <div class="bg-white p-4 rounded-lg shadow-md border border-slate-200">
+                            <h4 class="font-semibold mb-3 text-slate-700">Select Configuration:</h4>
+                            <div class="space-y-2" id="control-config-selector">
+                                <div><label class="flex items-center cursor-pointer hover:bg-slate-100 p-2 rounded-md"><input type="radio" name="control-config" value="LV" class="mr-2" checked> Energy Balance (L,V)</label></div>
+                                <div><label class="flex items-center cursor-pointer hover:bg-slate-100 p-2 rounded-md"><input type="radio" name="control-config" value="LB" class="mr-2"> Material Balance (L,B)</label></div>
+                                <div><label class="flex items-center cursor-pointer hover:bg-slate-100 p-2 rounded-md"><input type="radio" name="control-config" value="DV" class="mr-2"> Material Balance (D,V)</label></div>
+                            </div>
+                            <div id="config-description" class="mt-4 text-sm text-slate-600 border-t pt-3"></div>
+                        </div>
+                        <div class="md:col-span-2 relative h-[500px] bg-slate-100 rounded-lg p-4 border border-slate-200 flex justify-center items-center overflow-hidden">
+                            <div id="control-diagram-container" class="relative w-full h-full">
+                                <!-- Equipment -->
+                                <div class="absolute top-4 left-1/2 -translate-x-1/2 w-48 h-12 bg-slate-200 border-2 border-slate-400 rounded-md flex justify-center items-center text-sm font-semibold text-slate-700 z-20">CONDENSER</div>
+                                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 w-48 h-12 bg-slate-200 border-2 border-slate-400 rounded-md flex justify-center items-center text-sm font-semibold text-slate-700 z-20">REBOILER</div>
+                                <div class="absolute top-20 bottom-20 left-1/2 -translate-x-1/2 w-32 bg-white border-4 border-slate-500 rounded-lg shadow-inner flex flex-col justify-around items-center py-2 z-10">
+                                    <div class="w-full h-px bg-slate-300"></div><div class="w-full h-px bg-slate-300"></div><div class="w-full h-px bg-slate-300"></div><div class="w-full h-px bg-slate-300"></div><div class="w-full h-px bg-slate-300"></div><div class="w-full h-px bg-slate-300"></div><div class="w-full h-px bg-slate-300"></div>
+                                </div>
+                                <!-- Lines & Arrows -->
+                                <div id="line-feed" class="control-line" style="left: 20%; top: 50%; width: 29%; height: 2px; background-color: #475569;"></div>
+                                <div id="arrow-feed" class="control-arrow" style="left: 49%; top: 50%; transform: translateY(-50%); border-left: 8px solid #475569; border-top: 6px solid transparent; border-bottom: 6px solid transparent;"></div>
+                                <div id="line-reflux" class="control-line transition-all" style="left: 66%; top: 28%; width: 2px; height: 12%;"></div>
+                                <div id="arrow-reflux" class="control-arrow transition-all" style="left: 66%; top: 40%; transform: translateX(-50%); border-top: 8px solid; border-left: 6px solid transparent; border-right: 6px solid transparent;"></div>
+                                <div id="line-distillate" class="control-line transition-all" style="left: 66%; top: 28%; width: 24%; height: 2px;"></div>
+                                <div id="arrow-distillate" class="control-arrow transition-all" style="left: 90%; top: 28%; transform: translateY(-50%); border-left: 8px solid; border-top: 6px solid transparent; border-bottom: 6px solid transparent;"></div>
+                                <div id="line-boilup" class="control-line transition-all" style="left: 34%; top: 60%; width: 2px; height: 12%;"></div>
+                                <div id="arrow-boilup" class="control-arrow transition-all" style="left: 34%; top: 60%; transform: translateX(-50%); border-bottom: 8px solid; border-left: 6px solid transparent; border-right: 6px solid transparent;"></div>
+                                <div id="line-bottoms" class="control-line transition-all" style="left: 10%; bottom: 28%; width: 24%; height: 2px;"></div>
+                                <div id="arrow-bottoms" class="control-arrow transition-all" style="left: 10%; bottom: 28%; transform: translateY(50%); border-right: 8px solid; border-top: 6px solid transparent; border-bottom: 6px solid transparent;"></div>
+                                <!-- Labels -->
+                                <div class="absolute left-10 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-700">FEED</div>
+                                <div id="label-reflux" class="absolute left-[68%] top-[42%] text-sm font-semibold transition-colors">Reflux (L)</div>
+                                <div id="label-distillate" class="absolute right-2 top-[28%] -translate-y-1/2 text-sm font-semibold transition-colors">Distillate (D)</div>
+                                <div id="label-boilup" class="absolute right-[68%] top-[55%] text-sm font-semibold transition-colors">Boilup (V)</div>
+                                <div id="label-bottoms" class="absolute left-2 bottom-[28%] -translate-y-1/2 text-sm font-semibold transition-colors">Bottoms (B)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Troubleshooting Section -->
+            <section id="troubleshooting" class="content-section">
+                <h2 class="text-3xl font-bold mb-6 text-slate-800 border-b-2 pb-2 border-teal-200">Interactive Troubleshooting Guide</h2>
+                <p class="text-slate-600 mb-8 max-w-4xl">This tool helps you move systematically from an observable symptom to its likely root cause and solution. Select a symptom from the dropdown list to see the most common causes, recommended diagnostic actions, and potential corrective measures based on field experience and engineering principles.</p>
+                <div class="bg-white p-6 rounded-lg shadow-lg border border-slate-200">
+                    <div class="flex items-center space-x-4 mb-6">
+                        <label for="symptom-selector" class="text-lg font-semibold text-slate-700">Select a Symptom:</label>
+                        <select id="symptom-selector" class="p-2 border border-slate-300 rounded-md bg-white text-base w-full md:w-auto">
+                           <option value="default" selected disabled>-- Choose an issue --</option>
+                           <option value="high_dp">High Column ΔP</option>
+                           <option value="low_dp">Low Column ΔP</option>
+                           <option value="offspec_top">Off-Spec Top Product</option>
+                           <option value="offspec_bottom">Off-Spec Bottom Product</option>
+                           <option value="fluctuations">Fluctuating Levels/Pressure</option>
+                        </select>
+                    </div>
+                    <div id="troubleshooting-results" class="min-h-[250px] transition-opacity duration-500">
+                        <p class="text-slate-500 text-center pt-16">Select a symptom to begin diagnosis.</p>
+                    </div>
+                </div>
+
+                <div class="mt-8 bg-white p-6 rounded-lg shadow-md border border-slate-200">
+                    <h3 class="font-bold text-xl text-teal-700 mb-3">Case Study: The Fouling Mystery</h3>
+                     <p class="text-slate-600">A chloromethane column lost capacity after a reboiler leak. Gamma scans showed flooding, but hydraulic calculations said it was impossible. The root cause was a chain reaction: the water leak created HCl, which corroded the steel shell, forming ferrous chloride. This salt precipitated and fouled the top trays when the column dried out. This shows the need for systematic diagnosis and advanced tools when simple data is contradictory.</p>
+                </div>
+
+            </section>
+
+            <!-- Optimization Section -->
+            <section id="optimization" class="content-section">
+                <h2 class="text-3xl font-bold mb-6 text-slate-800 border-b-2 pb-2 border-teal-200">Energy Optimization</h2>
+                <p class="text-slate-600 mb-8 max-w-4xl">Distillation is extremely energy-intensive. This section explores strategies to reduce costs and environmental impact, from simple operational tweaks to advanced, heat-integrated process designs. The goal is to find the most efficient way to achieve the required separation.</p>
+                
+                <div class="grid md:grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-md border border-slate-100">
+                        <h3 class="font-bold text-xl text-teal-700 mb-3">Fundamental Levers for Savings</h3>
+                        <ul class="list-disc list-inside space-y-2 text-slate-600">
+                            <li><strong>Optimize Reflux Ratio:</strong> The biggest opportunity. Avoid "over-refluxing." Operating closer to the minimum required reflux saves significant energy in both the reboiler and condenser.</li>
+                            <li><strong>Optimize Pressure:</strong> Lowering pressure often makes separation easier (increases relative volatility), reducing energy needs.</li>
+                            <li><strong>Feed Conditioning:</strong> Preheating the feed with waste heat reduces the load on the reboiler. Ensure the feed enters at the correct tray.</li>
+                        </ul>
+                    </div>
+                     <div class="bg-white p-6 rounded-lg shadow-md border border-slate-100">
+                        <h3 class="font-bold text-xl text-teal-700 mb-3">Case Study: De-ethanizer Optimization</h3>
+                        <p class="text-slate-600">Using process simulation, engineers found that adjusting the reboiler temperature to 110°C and reflux ratio to 2 resulted in a <strong>22.1% increase in LPG yield</strong> and a <strong>22.7% increase in annual profit</strong>—with no capital investment.</p>
+                    </div>
+                </div>
+
+                <div class="mt-8 bg-white p-6 rounded-lg shadow-lg border border-slate-200">
+                    <h3 class="font-bold text-xl text-teal-700 mb-3 text-center">Comparing Advanced Heat Integration Schemes</h3>
+                    <p class="text-slate-600 mb-6 text-center">Designs like Vapor Recompression (VRC) and Heat-Integrated Distillation (HIDiC) reuse waste heat to reduce utility consumption. The chart below compares their effectiveness.</p>
+                    <div class="chart-container" style="height:350px">
+                        <canvas id="optimizationChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Future Trends Section -->
+            <section id="future" class="content-section">
+                <h2 class="text-3xl font-bold mb-6 text-slate-800 border-b-2 pb-2 border-teal-200">The Future: Digitalization & AI</h2>
+                 <p class="text-slate-600 mb-8 max-w-4xl">Distillation operation is moving from reactive adjustments to predictive and autonomous control. Digitalization, powered by advanced models and AI, is unlocking unprecedented levels of efficiency, reliability, and safety by making the "black box" of the column transparent.</p>
+                <div class="grid md:grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-md border border-slate-100">
+                        <h3 class="font-bold text-xl text-teal-700 mb-3">Advanced Process Control (APC)</h3>
+                        <p class="text-slate-600"><strong>Model Predictive Control (MPC)</strong> uses a dynamic process model to predict future behavior. It continuously calculates the optimal moves to meet quality targets while respecting all safety and equipment constraints. APC pushes the unit closer to its true economic optimum, increasing throughput and reducing energy use. One case study showed an 8% production increase.</p>
+                    </div>
+                     <div class="bg-white p-6 rounded-lg shadow-md border border-slate-100">
+                        <h3 class="font-bold text-xl text-teal-700 mb-3">The Digital Twin Revolution</h3>
+                        <p class="text-slate-600">A digital twin is a high-fidelity virtual replica of the column, updated in real-time with plant data. It enables:</p>
+                        <ul class="list-disc list-inside space-y-2 text-slate-600 mt-2">
+                            <li><strong>Predictive Maintenance:</strong> Forecast fouling or equipment failure.</li>
+                            <li><strong>Optimization:</strong> Safely test "what-if" scenarios offline.</li>
+                            <li><strong>Advanced Diagnostics:</strong> Identify issues before standard alarms trigger.</li>
+                             <li><strong>Realistic Operator Training:</strong> Practice startups and emergencies safely.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md border border-slate-100 col-span-1 lg:col-span-2">
+                        <h3 class="font-bold text-xl text-teal-700 mb-3">Machine Learning (ML) Applications</h3>
+                        <p class="text-slate-600">ML models learn from historical data to solve complex problems without being explicitly programmed with physics.</p>
+                        <ul class="list-disc list-inside space-y-2 text-slate-600 mt-2">
+                           <li><strong>Predicting Flooding:</strong> ML models can be trained to provide an early warning of impending flood conditions.</li>
+                           <li><strong>Optimizing Maintenance:</strong> A recent study used ML to predict the rate of fouling in a column. This allowed maintenance to be scheduled proactively, reducing suboptimal operation by 30-40%.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            const mobileNav = document.getElementById('mobile-nav');
+            const navLinkButtons = document.querySelectorAll('.nav-link-button');
+            const sections = document.querySelectorAll('.content-section');
+            const opTabButtons = document.querySelectorAll('.tab-button');
+            const opTabContents = document.querySelectorAll('.op-tab-content');
+            const symptomSelector = document.getElementById('symptom-selector');
+            const troubleshootingResults = document.getElementById('troubleshooting-results');
+            const accordionItems = document.querySelectorAll('.accordion-item');
+            const columnTypeSelector = document.getElementById('column-type-selector');
+            const columnTypeDisplay = document.getElementById('column-type-display');
+            let vleChartInstance;
+
+            const setActiveLink = (targetId) => {
+                 navLinks.forEach(link => {
+                    link.classList.toggle('active', link.dataset.target === targetId);
+                });
+                if (mobileNav.value !== targetId) {
+                    mobileNav.value = targetId;
+                }
+            };
+            
+            const showSection = (targetId) => {
+                sections.forEach(section => {
+                    section.classList.toggle('active', section.id === targetId);
+                });
+                setActiveLink(targetId);
+                 window.scrollTo(0, 0);
+
+                 if (targetId === 'fundamentals' && !vleChartInstance) {
+                    createVLEChart();
+                 }
+            };
+
+            const handleNavClick = (event) => {
+                const targetId = event.currentTarget.dataset.target;
+                showSection(targetId);
+            };
+
+            navLinks.forEach(link => link.addEventListener('click', handleNavClick));
+            navLinkButtons.forEach(button => button.addEventListener('click', handleNavClick));
+            
+            mobileNav.addEventListener('change', (event) => {
+                showSection(event.target.value);
+            });
+
+            opTabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabId = button.dataset.tab;
+                    
+                    opTabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+
+                    opTabContents.forEach(content => {
+                        if (content.id === tabId) {
+                            content.classList.remove('hidden');
+                        } else {
+                            content.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+
+            accordionItems.forEach(item => {
+                const header = item.querySelector('.accordion-header');
+                const content = item.querySelector('.accordion-content');
+                const icon = header.querySelector('span');
+
+                header.addEventListener('click', () => {
+                    const isOpening = content.style.maxHeight === '0px' || !content.style.maxHeight;
+                    
+                    document.querySelectorAll('.accordion-content').forEach(c => c.style.maxHeight = '0px');
+                    document.querySelectorAll('.accordion-header span').forEach(i => i.style.transform = 'rotate(0deg)');
+
+                    if (isOpening) {
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                        icon.style.transform = 'rotate(180deg)';
+                    } else {
+                        content.style.maxHeight = '0px';
+                        icon.style.transform = 'rotate(0deg)';
+                    }
+                });
+            });
+            
+            const troubleshootingData = {
+                high_dp: {
+                    causes: ['Flooding', 'Foaming', 'Fouling/Plugging', 'Damaged Internals'],
+                    diagnostics: ['Check vapor/liquid rates vs. design', 'Analyze ΔP trend (sudden vs. gradual)', 'Perform gamma scan', 'Check feed for contaminants'],
+                    solutions: ['Reduce reboiler duty/feed rate', 'Inject anti-foam agent', 'Schedule for cleaning', 'Shutdown for internal repair']
+                },
+                low_dp: {
+                    causes: ['Weeping/Dumping', 'Severe Channeling (packing)', 'Blown/Missing Trays'],
+                    diagnostics: ['Check vapor rates vs. minimum turndown', 'Analyze ΔP trend (sudden drop)', 'Perform gamma scan'],
+                    solutions: ['Increase reboiler duty/feed rate', 'Plan for shutdown and internal repair/redistributor modification']
+                },
+                offspec_top: {
+                    causes: ['Insufficient Reflux (Low L/D)', 'Feed Composition Change', 'Hydraulic Issues (Weeping/Flooding)', 'Fouling', 'Incorrect Control Tray Temp'],
+                    diagnostics: ['Verify reflux ratio', 'Check feed analysis', 'Review ΔP and temperature profiles', 'Check for loss of tray efficiency'],
+                    solutions: ['Increase reflux rate', 'Adjust control setpoints', 'Address underlying hydraulic issue', 'Schedule for cleaning']
+                },
+                offspec_bottom: {
+                    causes: ['Insufficient Boil-up (Low V/B)', 'Feed Composition Change', 'Hydraulic Issues (Weeping/Flooding)', 'Fouling', 'Incorrect Control Tray Temp'],
+                    diagnostics: ['Verify reboiler duty', 'Check feed analysis', 'Review ΔP and temperature profiles', 'Check for loss of tray efficiency'],
+                    solutions: ['Increase reboiler duty', 'Adjust control setpoints', 'Address underlying hydraulic issue', 'Schedule for cleaning']
+                },
+                fluctuations: {
+                    causes: ['Control Loop Tuning Issues', 'Reboiler/Condenser Instability', 'Foaming', 'Two Liquid Phases in Feed'],
+                    diagnostics: ['Review controller tuning (level, pressure)', 'Check for pump cavitation or utility fluctuations', 'Check feed for contaminants (e.g., water)'],
+                    solutions: ['Re-tune controllers', 'Troubleshoot auxiliary equipment', 'Inject anti-foam', 'Address upstream separation issues']
+                }
+            };
+            
+            symptomSelector.addEventListener('change', (event) => {
+                const symptom = event.target.value;
+                if (symptom && troubleshootingData[symptom]) {
+                    const data = troubleshootingData[symptom];
+                    troubleshootingResults.innerHTML = `
+                        <div class="grid md:grid-cols-3 gap-6">
+                            <div>
+                                <h4 class="font-bold text-lg text-slate-800 mb-2">Potential Causes</h4>
+                                <ul class="list-disc list-inside space-y-1 text-slate-600">${data.causes.map(item => `<li>${item}</li>`).join('')}</ul>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg text-slate-800 mb-2">Diagnostic Actions</h4>
+                                <ul class="list-disc list-inside space-y-1 text-slate-600">${data.diagnostics.map(item => `<li>${item}</li>`).join('')}</ul>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg text-slate-800 mb-2">Corrective Solutions</h4>
+                                <ul class="list-disc list-inside space-y-1 text-slate-600">${data.solutions.map(item => `<li>${item}</li>`).join('')}</ul>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            const columnTypeData = {
+                cdu: {
+                    title: 'CDU Main Fractionator',
+                    desc: 'The CDU fractionates whole crude oil into broad "cuts" based on boiling ranges. The goal is yield and cut point control, not high purity. It is characterized by multiple side-stream products and energy-saving pumparounds.',
+                    kpis: ['Furnace Outlet Temperature (COT)', 'Side Stream Draw Rates', 'Pumparound Duty (Heat Removal)', 'Product Overlap/Gap', 'Stripping Steam Rate']
+                },
+                deethanizer: {
+                    title: 'De-ethanizer',
+                    desc: 'Performs a sharp separation of ethane (C2) from heavier NGLs (C3+). A key challenge is preventing hydrate formation at low condenser temperatures. Modern designs often run at high pressure to keep condenser temps above the hydrate point.',
+                    kpis: ['C3 in Overhead Product', 'C2 in Bottoms Product', 'Operating Pressure', 'Reflux Ratio']
+                },
+                debutanizer: {
+                    title: 'Debutanizer',
+                    desc: 'Separates butanes (C4s) from heavier components (C5+, natural gasoline). The key objectives are meeting a vapor pressure specification on the C4 product and ensuring the C5+ bottoms are stabilized (low C4 content).',
+                    kpis: ['Overhead Product Vapor Pressure', 'C4 in Bottoms Product', 'Reboil Ratio', 'Reflux Ratio']
+                },
+                stripper: {
+                    title: 'Stripper Column',
+                    desc: 'A simple column designed only to remove volatile components from a liquid using a stripping agent (e.g., steam). It is essentially the bottom half of a full distillation column, with no condenser or reflux.',
+                    kpis: ['Stripping Agent to Liquid Feed Ratio (S/L)', 'Volatile Component in Bottoms Product']
+                }
+            };
+            
+            const displayColumnTypeData = (type) => {
+                const data = columnTypeData[type];
+                columnTypeDisplay.innerHTML = `
+                    <h3 class="font-bold text-xl text-teal-700 mb-2">${data.title}</h3>
+                    <p class="text-slate-600 mb-4">${data.desc}</p>
+                    <h4 class="font-semibold text-slate-800 mb-2">Key Parameters & KPIs:</h4>
+                    <ul class="list-disc list-inside space-y-1 text-slate-600">
+                        ${data.kpis.map(kpi => `<li>${kpi}</li>`).join('')}
+                    </ul>
+                `;
+            };
+
+            columnTypeSelector.addEventListener('change', (event) => {
+                displayColumnTypeData(event.target.value);
+            });
+            
+            function createVLEChart() {
+                const ctx = document.getElementById('vleChart').getContext('2d');
+                const x_data = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
+                const y_data = [0, 0.21, 0.38, 0.51, 0.63, 0.72, 0.8, 0.87, 0.93, 0.97, 1.0];
+                const temp_data = [110.6, 105.4, 101.7, 98.7, 95.9, 93.4, 91.2, 88.7, 86.1, 83.1, 80.1];
+                
+                const bubble_points = x_data.map((x, i) => ({x: x, y: temp_data[i]}));
+                const dew_points = y_data.map((y, i) => ({x: y, y: temp_data[i]}));
+
+                vleChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: [
+                            {
+                                label: 'Bubble Line (Liquid)',
+                                data: bubble_points,
+                                borderColor: 'rgb(59, 130, 246)',
+                                backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                                tension: 0.1,
+                                pointRadius: 0
+                            },
+                            {
+                                label: 'Dew Line (Vapor)',
+                                data: dew_points,
+                                borderColor: 'rgb(239, 68, 68)',
+                                backgroundColor: 'rgba(239, 68, 68, 0.5)',
+                                tension: 0.1,
+                                pointRadius: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        scales: {
+                            x: {
+                                type: 'linear',
+                                position: 'bottom',
+                                min: 0,
+                                max: 1,
+                                title: {
+                                    display: true,
+                                    text: 'Mole Fraction of More Volatile Component'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Temperature (°C)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            tooltip: { enabled: false },
+                            legend: { position: 'bottom' },
+                            title: { display: true, text: 'T-xy Diagram for a Binary Mixture' },
+                            annotation: {
+                                annotations: {
+                                    tieLine: {
+                                        type: 'line',
+                                        yMin: 95, yMax: 95,
+                                        borderColor: 'rgb(13, 148, 136)',
+                                        borderWidth: 2,
+                                        borderDash: [6, 6]
+                                    },
+                                    liquidPoint: {
+                                        type: 'point',
+                                        xValue: 0.4, yValue: 95,
+                                        backgroundColor: 'rgb(59, 130, 246)',
+                                        radius: 5
+                                    },
+                                    vaporPoint: {
+                                        type: 'point',
+                                        xValue: 0.62, yValue: 95,
+                                        backgroundColor: 'rgb(239, 68, 68)',
+                                        radius: 5
+                                    },
+                                    liquidLabel: {
+                                        type: 'label',
+                                        xValue: 0.4, yValue: 95,
+                                        content: ['x = 0.40'],
+                                        yAdjust: -15,
+                                        font: { weight: 'bold' }
+                                    },
+                                    vaporLabel: {
+                                        type: 'label',
+                                        xValue: 0.62, yValue: 95,
+                                        content: ['y = 0.62'],
+                                        yAdjust: -15,
+                                        font: { weight: 'bold' }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                document.getElementById('vleChart').addEventListener('mousemove', (e) => {
+                    if (!vleChartInstance) return;
+                    const rect = e.target.getBoundingClientRect();
+                    const y = e.clientY - rect.top;
+                    const chartArea = vleChartInstance.chartArea;
+                    if (y >= chartArea.top && y <= chartArea.bottom) {
+                        const tempValue = vleChartInstance.scales.y.getValueForPixel(y);
+                        
+                        let liquidX = 0;
+                        let vaporX = 0;
+
+                        for(let i = 0; i < temp_data.length - 1; i++) {
+                            if (temp_data[i] >= tempValue && temp_data[i+1] <= tempValue) {
+                                const t1 = temp_data[i];
+                                const t2 = temp_data[i+1];
+                                const x1 = x_data[i];
+                                const x2 = x_data[i+1];
+                                liquidX = x1 + (x2 - x1) * (tempValue - t1) / (t2 - t1);
+
+                                const y1 = y_data[i];
+                                const y2 = y_data[i+1];
+                                vaporX = y1 + (y2 - y1) * (tempValue - t1) / (t2 - t1);
+                                break;
+                            }
+                        }
+                        
+                        vleChartInstance.options.plugins.annotation.annotations.tieLine.yMin = tempValue;
+                        vleChartInstance.options.plugins.annotation.annotations.tieLine.yMax = tempValue;
+                        vleChartInstance.options.plugins.annotation.annotations.liquidPoint.yValue = tempValue;
+                        vleChartInstance.options.plugins.annotation.annotations.liquidPoint.xValue = liquidX;
+                        vleChartInstance.options.plugins.annotation.annotations.vaporPoint.yValue = tempValue;
+                        vleChartInstance.options.plugins.annotation.annotations.vaporPoint.xValue = vaporX;
+                        vleChartInstance.options.plugins.annotation.annotations.liquidLabel.yValue = tempValue;
+                        vleChartInstance.options.plugins.annotation.annotations.liquidLabel.xValue = liquidX;
+                        vleChartInstance.options.plugins.annotation.annotations.liquidLabel.content = [`x = ${liquidX.toFixed(2)}`];
+                        vleChartInstance.options.plugins.annotation.annotations.vaporLabel.yValue = tempValue;
+                        vleChartInstance.options.plugins.annotation.annotations.vaporLabel.xValue = vaporX;
+                        vleChartInstance.options.plugins.annotation.annotations.vaporLabel.content = [`y = ${vaporX.toFixed(2)}`];
+                        
+                        vleChartInstance.update('none');
+                    }
+                });
+            }
+
+            const optimizationData = {
+                labels: ['Conventional', 'Vapor Recompression', 'Modified VRC', 'Internal HIDiC', 'External HIDiC'],
+                energySavings: [0, 45, 55, 60, 50],
+                exergyEfficiency: [9.27, 9.27, 10.69, 8.09, 9.77]
+            };
+            const optCtx = document.getElementById('optimizationChart').getContext('2d');
+            const optimizationChart = new Chart(optCtx, {
+                type: 'bar',
+                data: {
+                    labels: optimizationData.labels,
+                    datasets: [{
+                        label: 'Typical Energy Savings (%)',
+                        data: optimizationData.energySavings,
+                        backgroundColor: 'rgba(13, 148, 136, 0.6)', // teal-600 with opacity
+                        borderColor: 'rgba(13, 148, 136, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Exergy Efficiency (%)',
+                        data: optimizationData.exergyEfficiency,
+                        backgroundColor: 'rgba(2, 132, 199, 0.6)', // sky-600 with opacity
+                        borderColor: 'rgba(2, 132, 199, 1)',
+                        borderWidth: 1,
+                        hidden: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Percentage (%)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: { mode: 'index', intersect: false },
+                        title: { display: true, text: 'Comparison of Energy Saving Schemes' }
+                    }
+                }
+            });
+
+            // Control Strategy Visualizer Logic
+            const controlConfigSelector = document.getElementById('control-config-selector');
+            const configDesc = document.getElementById('config-description');
+            
+            const lines = {
+                reflux: document.getElementById('line-reflux'),
+                distillate: document.getElementById('line-distillate'),
+                boilup: document.getElementById('line-boilup'),
+                bottoms: document.getElementById('line-bottoms')
+            };
+
+            const arrows = {
+                reflux: document.getElementById('arrow-reflux'),
+                distillate: document.getElementById('arrow-distillate'),
+                boilup: document.getElementById('arrow-boilup'),
+                bottoms: document.getElementById('arrow-bottoms')
+            };
+
+             const labels = {
+                reflux: document.getElementById('label-reflux'),
+                distillate: document.getElementById('label-distillate'),
+                boilup: document.getElementById('label-boilup'),
+                bottoms: document.getElementById('label-bottoms')
+            };
+
+            const controlConfigs = {
+                LV: {
+                    desc: '<strong>Energy Balance:</strong> Reflux (L) controls top composition, Boilup (V) controls bottom. Best for low reflux ratio (L/D < 5).',
+                    comp: ['reflux', 'boilup'],
+                    level: ['distillate', 'bottoms']
+                },
+                LB: {
+                    desc: '<strong>Material Balance:</strong> Reflux (L) controls top composition, Bottoms (B) controls bottom. Good for high reflux ratio (L/D > 8).',
+                    comp: ['reflux', 'bottoms'],
+                    level: ['distillate', 'boilup']
+                },
+                DV: {
+                    desc: '<strong>Material Balance:</strong> Distillate (D) controls top composition, Boilup (V) controls bottom. Good for high reflux ratio (L/D > 8).',
+                    comp: ['distillate', 'boilup'],
+                    level: ['reflux', 'bottoms']
+                }
+            };
+
+            function updateControlDiagram(configKey) {
+                const config = controlConfigs[configKey];
+                configDesc.innerHTML = config.desc;
+
+                const compColor = '#3B82F6'; // blue-500
+                const levelColor = '#16A34A'; // green-600
+                const defaultColor = '#64748b'; // slate-500
+
+                Object.keys(lines).forEach(key => {
+                    const line = lines[key];
+                    const arrow = arrows[key];
+                    const label = labels[key];
+
+                    line.style.opacity = '0';
+                    arrow.style.opacity = '0';
+                    label.classList.remove('text-blue-600', 'text-green-600', 'font-bold');
+
+                    setTimeout(() => {
+                        if (config.comp.includes(key)) {
+                            line.style.backgroundColor = compColor;
+                            arrow.style.borderColor = `transparent transparent transparent ${compColor}`.replace('transparent', 'transparent').replace('transparent', 'transparent').replace(key === 'reflux' || key === 'boilup' ? 'left' : 'right', key === 'reflux' ? 'top' : key === 'boilup' ? 'bottom' : 'left');
+                             if (key === 'reflux') arrow.style.borderTopColor = compColor;
+                             if (key === 'boilup') arrow.style.borderBottomColor = compColor;
+                             if (key === 'distillate') arrow.style.borderLeftColor = compColor;
+                             if (key === 'bottoms') arrow.style.borderRightColor = compColor;
+                            
+                            label.classList.add('text-blue-600', 'font-bold');
+                            line.style.opacity = '1';
+                            arrow.style.opacity = '1';
+                        } else if (config.level.includes(key)) {
+                            line.style.backgroundColor = levelColor;
+                             if (key === 'reflux') arrow.style.borderTopColor = levelColor;
+                             if (key === 'boilup') arrow.style.borderBottomColor = levelColor;
+                             if (key === 'distillate') arrow.style.borderLeftColor = levelColor;
+                             if (key === 'bottoms') arrow.style.borderRightColor = levelColor;
+
+                            label.classList.add('text-green-600', 'font-bold');
+                            line.style.opacity = '1';
+                            arrow.style.opacity = '1';
+                        }
+                    }, 50);
+                });
+            }
+
+            controlConfigSelector.addEventListener('change', (e) => {
+                updateControlDiagram(e.target.value);
+            });
+
+            // Initial setup
+            showSection('home');
+            opTabButtons[0].click();
+            displayColumnTypeData('cdu');
+            updateControlDiagram('LV');
+        });
+    </script>
+</body>
+</html>
