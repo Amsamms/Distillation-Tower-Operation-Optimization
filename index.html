@@ -44,12 +44,13 @@
             max-width: 800px;
             margin-left: auto;
             margin-right: auto;
-            height: 400px;
-            max-height: 450px;
+            height: 300px;
+            max-height: 350px;
         }
         @media (min-width: 768px) {
             .chart-container {
                 height: 450px;
+                max-height: 450px;
             }
         }
         .tab-button.active {
@@ -73,6 +74,63 @@
             height: 0;
             border-style: solid;
         }
+        
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr !important;
+            }
+            .md\\:grid-cols-2, .lg\\:grid-cols-2, .lg\\:grid-cols-3 {
+                grid-template-columns: 1fr !important;
+            }
+            .text-4xl {
+                font-size: 2.25rem !important;
+            }
+            .text-3xl {
+                font-size: 1.875rem !important;
+            }
+            .text-xl {
+                font-size: 1.125rem !important;
+            }
+            .control-diagram-container {
+                height: 350px !important;
+            }
+            #control-diagram-container {
+                height: 350px !important;
+            }
+            .md\\:col-span-2 {
+                grid-column: span 1 !important;
+            }
+            .lg\\:col-span-2 {
+                grid-column: span 1 !important;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .container {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+            .p-4, .p-6, .p-8 {
+                padding: 1rem !important;
+            }
+            .gap-6, .gap-8 {
+                gap: 1rem !important;
+            }
+            .text-lg {
+                font-size: 1rem !important;
+            }
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #0d9488, #14b8a6);
+            transition: all 0.3s ease;
+        }
+        .download-btn:hover {
+            background: linear-gradient(135deg, #0f766e, #0d9488);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(13, 148, 136, 0.3);
+        }
     </style>
 </head>
 <body class="bg-stone-50 text-slate-800">
@@ -85,25 +143,35 @@
                     <div class="flex items-center">
                         <span class="font-bold text-xl text-teal-700">Operator's Handbook</span>
                     </div>
-                    <div class="hidden md:block">
-                        <div class="ml-10 flex items-baseline space-x-4">
-                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent" data-target="home">Overview</a>
-                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent" data-target="fundamentals">Fundamentals</a>
-                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent" data-target="operations">Operations & Control</a>
-                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent" data-target="troubleshooting">Troubleshooting</a>
-                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent" data-target="optimization">Optimization</a>
-                            <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent" data-target="future">Future Trends</a>
+                    <div class="flex items-center space-x-2">
+                        <!-- Download Button -->
+                        <button id="download-pdf" class="download-btn text-white px-3 py-2 rounded-lg text-sm font-semibold flex items-center space-x-2 shadow-md">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <span class="hidden sm:inline">Download PDF</span>
+                            <span class="sm:hidden">PDF</span>
+                        </button>
+                        <div class="hidden md:block">
+                            <div class="ml-2 flex items-baseline space-x-4">
+                                <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent" data-target="home">Overview</a>
+                                <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent" data-target="fundamentals">Fundamentals</a>
+                                <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent" data-target="operations">Operations & Control</a>
+                                <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent" data-target="troubleshooting">Troubleshooting</a>
+                                <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent" data-target="optimization">Optimization</a>
+                                <a class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-teal-600 border-b-2 border-transparent" data-target="future">Future Trends</a>
+                            </div>
                         </div>
-                    </div>
-                     <div class="md:hidden">
-                        <select id="mobile-nav" class="bg-white border border-slate-300 rounded-md p-2 text-sm">
-                            <option value="home">Overview</option>
-                            <option value="fundamentals">Fundamentals</option>
-                            <option value="operations">Operations & Control</option>
-                            <option value="troubleshooting">Troubleshooting</option>
-                            <option value="optimization">Optimization</option>
-                            <option value="future">Future Trends</option>
-                        </select>
+                         <div class="md:hidden">
+                            <select id="mobile-nav" class="bg-white border border-slate-300 rounded-md p-2 text-sm">
+                                <option value="home">Overview</option>
+                                <option value="fundamentals">Fundamentals</option>
+                                <option value="operations">Operations & Control</option>
+                                <option value="troubleshooting">Troubleshooting</option>
+                                <option value="optimization">Optimization</option>
+                                <option value="future">Future Trends</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </nav>
@@ -166,10 +234,10 @@
             <section id="operations" class="content-section">
                 <h2 class="text-3xl font-bold mb-6 text-slate-800 border-b-2 pb-2 border-teal-200">Operations & Control</h2>
                 <p class="text-slate-600 mb-8 max-w-4xl">This module is a practical guide to the day-to-day management of distillation columns. It covers the essential control loops that ensure stability, step-by-step procedures for routine and non-routine operations, and tailored advice for specific types of columns found throughout a plant.</p>
-                <div class="flex flex-wrap border-b border-gray-200 mb-6">
-                    <button class="tab-button py-2 px-4 text-slate-600 font-semibold border-b-2 border-transparent" data-tab="op-procedures">Operating Procedures</button>
-                    <button class="tab-button py-2 px-4 text-slate-600 font-semibold border-b-2 border-transparent" data-tab="op-column-types">Specific Column Types</button>
-                    <button class="tab-button py-2 px-4 text-slate-600 font-semibold border-b-2 border-transparent" data-tab="op-control">Control Strategies</button>
+                <div class="flex flex-wrap border-b border-gray-200 mb-6 overflow-x-auto">
+                    <button class="tab-button py-2 px-3 sm:px-4 text-sm sm:text-base text-slate-600 font-semibold border-b-2 border-transparent whitespace-nowrap" data-tab="op-procedures">Operating Procedures</button>
+                    <button class="tab-button py-2 px-3 sm:px-4 text-sm sm:text-base text-slate-600 font-semibold border-b-2 border-transparent whitespace-nowrap" data-tab="op-column-types">Specific Column Types</button>
+                    <button class="tab-button py-2 px-3 sm:px-4 text-sm sm:text-base text-slate-600 font-semibold border-b-2 border-transparent whitespace-nowrap" data-tab="op-control">Control Strategies</button>
                 </div>
                 <div id="op-procedures" class="op-tab-content">
                     <div class="space-y-4">
@@ -222,9 +290,9 @@
                     </div>
                 </div>
                 <div id="op-column-types" class="op-tab-content hidden">
-                    <div class="flex items-center space-x-4 mb-6">
-                        <label for="column-type-selector" class="font-semibold">Select Column Type:</label>
-                        <select id="column-type-selector" class="p-2 border border-slate-300 rounded-md bg-white">
+                    <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mb-6">
+                        <label for="column-type-selector" class="font-semibold whitespace-nowrap">Select Column Type:</label>
+                        <select id="column-type-selector" class="p-2 border border-slate-300 rounded-md bg-white w-full sm:w-auto">
                             <option value="cdu">CDU Main Fractionator</option>
                             <option value="deethanizer">De-ethanizer</option>
                             <option value="debutanizer">Debutanizer</option>
@@ -238,8 +306,8 @@
                 <div id="op-control" class="op-tab-content hidden">
                     <h3 class="font-bold text-xl text-teal-700 mb-3">Interactive Control Strategy Visualizer</h3>
                     <p class="text-slate-600 mb-4">Select a control strategy to see which variables are manipulated to control composition (<span class="text-blue-600 font-semibold">blue lines</span>) and which control levels (<span class="text-green-600 font-semibold">green lines</span>). The choice depends on factors like reflux ratio (L/D).</p>
-                    <div class="grid md:grid-cols-3 gap-8 items-start">
-                        <div class="bg-white p-4 rounded-lg shadow-md border border-slate-200">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
+                        <div class="bg-white p-4 rounded-lg shadow-md border border-slate-200 lg:col-span-1">
                             <h4 class="font-semibold mb-3 text-slate-700">Select Configuration:</h4>
                             <div class="space-y-2" id="control-config-selector">
                                 <div><label class="flex items-center cursor-pointer hover:bg-slate-100 p-2 rounded-md"><input type="radio" name="control-config" value="LV" class="mr-2" checked> Energy Balance (L,V)</label></div>
@@ -248,7 +316,7 @@
                             </div>
                             <div id="config-description" class="mt-4 text-sm text-slate-600 border-t pt-3"></div>
                         </div>
-                        <div class="md:col-span-2 relative h-[500px] bg-slate-100 rounded-lg p-4 border border-slate-200 flex justify-center items-center overflow-hidden">
+                        <div class="lg:col-span-2 relative h-[400px] lg:h-[500px] bg-slate-100 rounded-lg p-4 border border-slate-200 flex justify-center items-center overflow-hidden">
                             <div id="control-diagram-container" class="relative w-full h-full">
                                 <!-- Equipment -->
                                 <div class="absolute top-4 left-1/2 -translate-x-1/2 w-48 h-12 bg-slate-200 border-2 border-slate-400 rounded-md flex justify-center items-center text-sm font-semibold text-slate-700 z-20">CONDENSER</div>
@@ -284,9 +352,9 @@
                 <h2 class="text-3xl font-bold mb-6 text-slate-800 border-b-2 pb-2 border-teal-200">Interactive Troubleshooting Guide</h2>
                 <p class="text-slate-600 mb-8 max-w-4xl">This tool helps you move systematically from an observable symptom to its likely root cause and solution. Select a symptom from the dropdown list to see the most common causes, recommended diagnostic actions, and potential corrective measures based on field experience and engineering principles.</p>
                 <div class="bg-white p-6 rounded-lg shadow-lg border border-slate-200">
-                    <div class="flex items-center space-x-4 mb-6">
-                        <label for="symptom-selector" class="text-lg font-semibold text-slate-700">Select a Symptom:</label>
-                        <select id="symptom-selector" class="p-2 border border-slate-300 rounded-md bg-white text-base w-full md:w-auto">
+                    <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mb-6">
+                        <label for="symptom-selector" class="text-base sm:text-lg font-semibold text-slate-700 whitespace-nowrap">Select a Symptom:</label>
+                        <select id="symptom-selector" class="p-2 border border-slate-300 rounded-md bg-white text-base w-full sm:w-auto">
                            <option value="default" selected disabled>-- Choose an issue --</option>
                            <option value="high_dp">High Column ΔP</option>
                            <option value="low_dp">Low Column ΔP</option>
@@ -366,6 +434,20 @@
                 </div>
             </section>
         </main>
+        
+        <!-- Footer -->
+        <footer class="bg-slate-800 text-white py-6 mt-12">
+            <div class="container mx-auto px-4 text-center">
+                <div class="flex flex-col md:flex-row justify-between items-center space-y-2 md:space-y-0">
+                    <div class="text-sm">
+                        Made by <span class="font-semibold text-teal-400">amsamms</span> with the help of AI
+                    </div>
+                    <div class="text-xs text-slate-400">
+                        Interactive Distillation Operator's Handbook © 2025
+                    </div>
+                </div>
+            </div>
+        </footer>
     </div>
 
     <script>
@@ -832,6 +914,16 @@
             opTabButtons[0].click();
             displayColumnTypeData('cdu');
             updateControlDiagram('LV');
+            
+            // Download PDF functionality
+            document.getElementById('download-pdf').addEventListener('click', function() {
+                const link = document.createElement('a');
+                link.href = 'Distillation Tower Operation Optimization Guide_.pdf';
+                link.download = 'Distillation_Tower_Operation_Optimization_Guide.pdf';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
         });
     </script>
 </body>
